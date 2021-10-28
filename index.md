@@ -29,12 +29,13 @@
 
 ## 獎項與經歷 Honors
 - *First Place Award* / **Facebook Misinformation Hackathon** / 台北市(2019)
+- *第二名 Second Place Award* / **Conflux黑客松** / 台北市(2021)
 - *第二名 Second Place Award* / **2019梅竹黑客松中華電信組 Mei-Chu hackathon Group CHT** / 新竹市(2019)
 - *第二名 Second Place & 平台優勝獎* / **第六屆清華創業競賽區塊鏈組** / 新竹市(2019)
 - *Runner Up & People's Choice Runner Up* / **國際區塊鏈奧林匹亞競賽** / 香港(2019)
 
 ## Research Interest
-* Blockchain development, web development, data mining
+* Blockchain development, Web development, data mining
 
 ## Developments
 - 智能合約CTF平台 [link](https://github.com/cypherpunks-core/cypherpunks-ctf)
