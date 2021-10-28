@@ -6,13 +6,15 @@
 **Phone: 0978239920**
 
 ## 自傳 Biography
-> 我是曾琮傑，目前就讀於政治大學企業管理系。我對於自己有熱忱的事物擁有很大的動力自己找資源來學習，從大一開始自學網頁設計以及區塊鏈，熟悉Html, Css, Javascript, nodejs等網頁開發以及Solidity智能合約，自學程式的同時不斷增加自己對區塊鏈的知識。2018 年通過位於矽谷的程式實驗學校 School 42 為期一個月的實體入學測驗，目前有成為正式學員的資格。目前是台灣區塊鏈社群中比較專注於技術的Cypherpunks中擔任Co-organizer。
+> 我是曾琮傑，於2021年6月畢業於政治大學企業管理系。
+我對於自己有熱忱的事物擁有很大的動力自己找資源來學習，從大一開始自學網頁設計以及區塊鏈，熟悉Html, Css, Javascript, nodejs等網頁開發以及Solidity智能合約，
+自學程式的同時不斷增加自己對區塊鏈的知識。
+2018 年通過位於矽谷的程式實驗學校 School 42 為期一個月的實體入學測驗，目前有成為正式學員的資格，但因礙於簽證問題沒法繼續深造，現在42 school矽谷分部也已經因為疫情影響而暫時關閉。
+目前是台灣區塊鏈社群中比較專注於技術的Cypherpunks中擔任Co-organizer。
+曾經擔任東吳區塊鏈課程講師，講述區塊鏈基本原理DLT技術、區塊和智能合約網路串接部分。
 > 
->I'm Tseng Tsung Chieh, i'm currently a senior student in National Cheng-Chi university and major in business administration. I'm a very active learner in things i love, so i self-taught on some programming language for example C/C++, python, javascript...etc, and blockchain associates. I'm familiar with javascript, nodejs, solidity smart contract.
-I passed the piscine(which is an enroll test) in 42 school sillicon valley.
->
 ## 學歷 Educational Background
-政治大學企業管理學系 NCCU BA(2017/09 ~ 2021/07 就學中)  
+政治大學企業管理學系 NCCU BA(2017/09 ~ 2021/06)  
 [School 42](https://www.twreporter.org/a/france-innovation-education-school-42) 錄取生 (2018/08 ~ )
 
 ## 工作經歷 Work Experience 
@@ -20,6 +22,10 @@ I passed the piscine(which is an enroll test) in 42 school sillicon valley.
 * Maintaining class order with foreign teacher
 * Marking Homework
 * Communicate with foreign teacher about students' conditions
+##### 東吳大學2020下學期東吳大學 SCU University | Lecturer | Taipei Taiwan | Mar 2020 ~ Jul 2020
+* Lecture about basic blockchain technology such as DLT, block architecture, PoW, ...etc
+* Lecture about interacting with smart contract
+* Design Practical tools for students to experiment how blockchain works
 
 ## 獎項與經歷 Honors
 - *First Place Award* / **Facebook Misinformation Hackathon** / 台北市(2019)
@@ -30,10 +36,12 @@ I passed the piscine(which is an enroll test) in 42 school sillicon valley.
 ## Research Interest
 * Blockchain development, web development, data mining
 
-## 程式開發
+## Developments
 - 智能合約CTF平台 [link](https://github.com/cypherpunks-core/cypherpunks-ctf)
+- Labee platform(frontend) [link](https://github.com/HappyFeet07/LabeeApp)
+- Lending a hand Smart Contract [link](https://github.com/HappyFeet07/LendingAHand-contract)
 - MakeWeWork Dapp [link](https://github.com/yuhferng/dexonDapp)
-- 政大活動點 NCCU attend [連結失效]
+- GuessNonce [link](https://github.com/HappyFeet07/guessNonce)
 
 ## 教學經驗 Teaching Experience
 - *課程助教 Teaching assistants* / 資訊視覺化X金融分析工作坊 Financial data visualizing workshop
