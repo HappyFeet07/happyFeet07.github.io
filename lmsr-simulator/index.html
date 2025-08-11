@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LMSR Simulator</title>
+    <title>LMSR Two Condition Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,8 +44,9 @@
     <div class="container mx-auto p-4 md:p-8 max-w-5xl">
         
         <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">LMSR 互動模擬器</h1>
-            <p class="mt-2 text-md text-gray-600">探索對數市場評分規則 (Logarithmic Market Scoring Rule)</p>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">LMSR Interaction Simulator</h1>
+            <p class="mt-2 text-md text-gray-600">Logarithmic Market Scoring Rule</p>
+            <p class="mt-2 text-md text-gray-600">This is generated fully by Gemini</p>
         </header>
 
         <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -93,6 +94,21 @@
                             <button id="q2Increment" class="control-button">+</button>
                         </div>
                         <input id="q2Slider" type="range" min="-500" max="500" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Chart Range Control -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label for="rangeSlider" class="control-label">Chart Range:</label>
+                            <span id="rangeValue" class="value-display">200</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button id="rangeDecrement" class="control-button">-</button>
+                            <input id="rangeSlider" type="range" min="10" max="1000" value="200" step="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <button id="rangeIncrement" class="control-button">+</button>
+                        </div>
                     </div>
                 </div>
 
@@ -152,10 +168,12 @@
         const bSlider = document.getElementById('bSlider');
         const q1Slider = document.getElementById('q1Slider');
         const q2Slider = document.getElementById('q2Slider');
+        const rangeSlider = document.getElementById('rangeSlider');
         
         const bValue = document.getElementById('bValue');
         const q1Input = document.getElementById('q1Input');
         const q2Input = document.getElementById('q2Input');
+        const rangeValue = document.getElementById('rangeValue');
 
         const price1Display = document.getElementById('price1');
         const price2Display = document.getElementById('price2');
@@ -167,6 +185,8 @@
         const q1Increment = document.getElementById('q1Increment');
         const q2Decrement = document.getElementById('q2Decrement');
         const q2Increment = document.getElementById('q2Increment');
+        const rangeDecrement = document.getElementById('rangeDecrement');
+        const rangeIncrement = document.getElementById('rangeIncrement');
 
         const tabA = document.getElementById('tabA');
         const tabB = document.getElementById('tabB');
@@ -194,9 +214,10 @@
             const b = parseFloat(bSlider.value);
             const q1_base = parseFloat(q1Slider.value);
             const q2_base = parseFloat(q2Slider.value);
+            const range = parseFloat(rangeSlider.value);
 
-            const range = 200;
-            const step = 10;
+            // Dynamically adjust step to keep chart smooth but performant
+            const step = Math.max(1, Math.round(range / 40));
             
             let datasets = [];
             let labels = [];
@@ -304,10 +325,12 @@
             const b = parseFloat(bSlider.value);
             const q1 = parseFloat(q1Slider.value);
             const q2 = parseFloat(q2Slider.value);
+            const range = parseFloat(rangeSlider.value);
 
             bValue.textContent = b;
             q1Input.value = q1;
             q2Input.value = q2;
+            rangeValue.textContent = range;
 
             const { p1, p2 } = calculatePrices(q1, q2, b);
             const cost = calculateCost(q1, q2, b);
@@ -323,6 +346,7 @@
         bSlider.addEventListener('input', update);
         q1Slider.addEventListener('input', update);
         q2Slider.addEventListener('input', update);
+        rangeSlider.addEventListener('input', update);
 
         q1Input.addEventListener('input', () => {
             const val = parseInt(q1Input.value);
@@ -345,6 +369,8 @@
         q1Increment.addEventListener('click', () => { q1Slider.stepUp(); update(); });
         q2Decrement.addEventListener('click', () => { q2Slider.stepDown(); update(); });
         q2Increment.addEventListener('click', () => { q2Slider.stepUp(); update(); });
+        rangeDecrement.addEventListener('click', () => { rangeSlider.stepDown(); update(); });
+        rangeIncrement.addEventListener('click', () => { rangeSlider.stepUp(); update(); });
 
         // Tab Listeners
         function setActiveTab(tabName) {
