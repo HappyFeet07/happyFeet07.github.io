@@ -6,6 +6,16 @@
     <title>LMSR Two Condition Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
@@ -76,10 +86,10 @@
                         <label for="q1Input" class="control-label">Quantity (q_A):</label>
                         <div class="flex items-center space-x-3">
                             <button id="q1Decrement" class="control-button">-</button>
-                            <input id="q1Input" type="number" value="0" step="1" class="number-input">
+                            <input id="q1Input" type="number" value="0" step="1" min="0" class="number-input">
                             <button id="q1Increment" class="control-button">+</button>
                         </div>
-                        <input id="q1Slider" type="range" min="-500" max="500" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <input id="q1Slider" type="range" min="0" max="500" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
                     </div>
                     
                     <hr class="my-4">
@@ -89,10 +99,10 @@
                         <label for="q2Input" class="control-label">Quantity (q_B):</label>
                         <div class="flex items-center space-x-3">
                             <button id="q2Decrement" class="control-button">-</button>
-                            <input id="q2Input" type="number" value="0" step="1" class="number-input">
+                            <input id="q2Input" type="number" value="0" step="1" min="0" class="number-input">
                             <button id="q2Increment" class="control-button">+</button>
                         </div>
-                        <input id="q2Slider" type="range" min="-500" max="500" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <input id="q2Slider" type="range" min="0" max="500" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
                     </div>
 
                     <hr class="my-4">
@@ -145,13 +155,21 @@
                     <h2 class="text-xl font-bold mb-4">Core Formulas</h2>
                     <div class="space-y-4 text-sm text-gray-700">
                         <p><strong>Cost Function:</strong></p>
-                        <p class="bg-white p-3 rounded-lg text-center text-md">
-                            <code class="font-mono">C(q) = b * ln(Σ exp(qᵢ / b))</code>
-                        </p>
+                        <div class="bg-white p-4 rounded-lg text-center text-lg">
+                            $$C(\mathbf{q}) = b \cdot \ln\left(\sum_{i} e^{q_i / b}\right)$$
+                        </div>
                         <p><strong>Price Function:</strong></p>
-                        <p class="bg-white p-3 rounded-lg text-center text-md">
-                            <code class="font-mono">pᵢ(q) = exp(qᵢ / b) / Σ exp(qⱼ / b)</code>
-                        </p>
+                        <div class="bg-white p-4 rounded-lg text-center text-lg">
+                            $$p_i(\mathbf{q}) = \frac{e^{q_i / b}}{\sum_{j} e^{q_j / b}}$$
+                        </div>
+                        <p><strong>Why prices don't start at 0.5:</strong></p>
+                        <div class="bg-yellow-50 p-3 rounded-lg text-sm">
+                            <p>In LMSR, when q_A = q_B = 0:</p>
+                            <div class="text-center my-2">
+                                $$p_A = p_B = \frac{e^{0/b}}{e^{0/b} + e^{0/b}} = \frac{1}{1 + 1} = 0.5$$
+                            </div>
+                            <p>But the graph shows q_A from 0 to range, not centered around the current q_A value. The price curve reflects how p_A changes as q_A varies from 0 upward, starting from the price when q_A=0 and q_B=current_value.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -226,9 +244,9 @@
             if (activeChart === 'A' || activeChart === 'Combined') {
                 const priceDataA = [];
                 const labelsA = [];
-                 for (let i = -range; i <= range; i += step) {
+                 for (let i = 0; i <= range; i += step) {
                     const current_q1 = q1_base + i;
-                    labelsA.push(current_q1);
+                    labelsA.push(i);
                     const { p1 } = calculatePrices(current_q1, q2_base, b);
                     priceDataA.push(p1);
                 }
@@ -250,9 +268,9 @@
             // Generate data for Price Curve B
             if (activeChart === 'B') {
                 const priceDataB = [];
-                 for (let i = -range; i <= range; i += step) {
+                 for (let i = 0; i <= range; i += step) {
                     const current_q2 = q2_base + i;
-                    labels.push(current_q2);
+                    labels.push(i);
                     const { p2 } = calculatePrices(q1_base, current_q2, b);
                     priceDataB.push(p2);
                 }
@@ -272,9 +290,9 @@
             if (activeChart === 'Combined') {
                 const priceDataB_combined = [];
                 // Use the same labels as curve A
-                for (let i = -range; i <= range; i += step) {
+                for (let i = 0; i <= range; i += step) {
                     const current_q1 = q1_base + i;
-                    if(labels.length < (2 * range / step + 1)) labels.push(current_q1);
+                    if(labels.length < (range / step + 1)) labels.push(i);
                     const { p2 } = calculatePrices(current_q1, q2_base, b);
                     priceDataB_combined.push(p2);
                 }
@@ -309,10 +327,25 @@
                         maintainAspectRatio: true,
                         scales: {
                             y: { beginAtZero: true, max: 1.0, title: { display: true, text: 'Price' } },
-                            x: { title: { display: true, text: xAxisLabel } }
+                            x: { beginAtZero: true, title: { display: true, text: xAxisLabel } }
                         },
                         plugins: {
                             tooltip: { mode: 'index', intersect: false },
+                            zoom: {
+                                pan: {
+                                    enabled: true,
+                                    mode: 'x'
+                                },
+                                zoom: {
+                                    wheel: {
+                                        enabled: true,
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'x',
+                                }
+                            }
                         }
                     }
                 });
@@ -349,15 +382,23 @@
 
         q1Input.addEventListener('input', () => {
             const val = parseInt(q1Input.value);
-            if (!isNaN(val) && val >= q1Slider.min && val <= q1Slider.max) {
+            if (!isNaN(val) && val >= 0 && val <= q1Slider.max) {
                 q1Slider.value = val;
+                update();
+            } else if (val < 0) {
+                q1Input.value = 0;
+                q1Slider.value = 0;
                 update();
             }
         });
         q2Input.addEventListener('input', () => {
             const val = parseInt(q2Input.value);
-            if (!isNaN(val) && val >= q2Slider.min && val <= q2Slider.max) {
+            if (!isNaN(val) && val >= 0 && val <= q2Slider.max) {
                 q2Slider.value = val;
+                update();
+            } else if (val < 0) {
+                q2Input.value = 0;
+                q2Slider.value = 0;
                 update();
             }
         });
@@ -370,6 +411,7 @@
         q2Increment.addEventListener('click', () => { q2Slider.stepUp(); update(); });
         rangeDecrement.addEventListener('click', () => { rangeSlider.stepDown(); update(); });
         rangeIncrement.addEventListener('click', () => { rangeSlider.stepUp(); update(); });
+
 
         // Tab Listeners
         function setActiveTab(tabName) {
