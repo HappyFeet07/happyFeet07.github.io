@@ -142,10 +142,14 @@
                         <label for="q1Input" class="control-label">Quantity (q_A):</label>
                         <div class="flex items-center space-x-3">
                             <button id="q1Decrement" class="control-button">-</button>
-                            <input id="q1Input" type="number" value="0" step="1" min="0" class="number-input">
+                            <input id="q1Input" type="number" value="0" step="10" min="0" max="100000" class="number-input">
                             <button id="q1Increment" class="control-button">+</button>
                         </div>
-                        <input id="q1Slider" type="range" min="0" max="500" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <input id="q1Slider" type="range" min="0" max="100000" value="0" step="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>0</span>
+                            <span>100k</span>
+                        </div>
                     </div>
                     
                     <hr class="my-4">
@@ -155,10 +159,14 @@
                         <label for="q2Input" class="control-label">Quantity (q_B):</label>
                         <div class="flex items-center space-x-3">
                             <button id="q2Decrement" class="control-button">-</button>
-                            <input id="q2Input" type="number" value="0" step="1" min="0" class="number-input">
+                            <input id="q2Input" type="number" value="0" step="10" min="0" max="100000" class="number-input">
                             <button id="q2Increment" class="control-button">+</button>
                         </div>
-                        <input id="q2Slider" type="range" min="0" max="500" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <input id="q2Slider" type="range" min="0" max="100000" value="0" step="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>0</span>
+                            <span>100k</span>
+                        </div>
                     </div>
 
                     <hr class="my-4">
@@ -593,23 +601,31 @@
 
         q1Input.addEventListener('input', () => {
             const val = parseInt(q1Input.value);
-            if (!isNaN(val) && val >= 0 && val <= q1Slider.max) {
+            if (!isNaN(val) && val >= 0 && val <= 100000) {
                 q1Slider.value = val;
                 update();
             } else if (val < 0) {
                 q1Input.value = 0;
                 q1Slider.value = 0;
                 update();
+            } else if (val > 100000) {
+                q1Input.value = 100000;
+                q1Slider.value = 100000;
+                update();
             }
         });
         q2Input.addEventListener('input', () => {
             const val = parseInt(q2Input.value);
-            if (!isNaN(val) && val >= 0 && val <= q2Slider.max) {
+            if (!isNaN(val) && val >= 0 && val <= 100000) {
                 q2Slider.value = val;
                 update();
             } else if (val < 0) {
                 q2Input.value = 0;
                 q2Slider.value = 0;
+                update();
+            } else if (val > 100000) {
+                q2Input.value = 100000;
+                q2Slider.value = 100000;
                 update();
             }
         });
