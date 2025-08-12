@@ -148,6 +148,12 @@
                         <button id="tabB" class="tab-button">Price Curve B</button>
                         <button id="tabCombined" class="tab-button">Combined</button>
                     </div>
+                    <div id="combinedControls" class="hidden mb-4 flex items-center justify-center space-x-4">
+                        <span class="text-sm text-gray-600">X-axis:</span>
+                        <button id="swapButton" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors duration-200 text-sm font-medium">
+                            <span id="swapButtonText">q_A → q_B</span>
+                        </button>
+                    </div>
                     <canvas id="lmsrChart"></canvas>
                 </div>
                 
@@ -180,6 +186,7 @@
     <script>
         // --- State ---
         let activeChart = 'A'; // 'A', 'B', or 'Combined'
+        let combinedSwapped = false; // Track if A/B are swapped in Combined view
 
         // --- DOM Elements ---
         const bSlider = document.getElementById('bSlider');
@@ -208,6 +215,9 @@
         const tabA = document.getElementById('tabA');
         const tabB = document.getElementById('tabB');
         const tabCombined = document.getElementById('tabCombined');
+        const combinedControls = document.getElementById('combinedControls');
+        const swapButton = document.getElementById('swapButton');
+        const swapButtonText = document.getElementById('swapButtonText');
 
         const ctx = document.getElementById('lmsrChart').getContext('2d');
         let chart;
@@ -286,17 +296,38 @@
                 xAxisLabel = 'Quantity (q_B)';
             }
             
-            // Generate data for B in Combined view (against q_A changes)
+            // Generate data for B in Combined view
             if (activeChart === 'Combined') {
                 const priceDataB_combined = [];
-                // Use the same labels as curve A
-                for (let i = 0; i <= range; i += step) {
-                    const current_q1 = q1_base + i;
-                    if(labels.length < (range / step + 1)) labels.push(i);
-                    const { p2 } = calculatePrices(current_q1, q2_base, b);
-                    priceDataB_combined.push(p2);
+                
+                if (!combinedSwapped) {
+                    // Default: both curves against q_A changes
+                    for (let i = 0; i <= range; i += step) {
+                        const current_q1 = q1_base + i;
+                        if(labels.length < (range / step + 1)) labels.push(i);
+                        const { p2 } = calculatePrices(current_q1, q2_base, b);
+                        priceDataB_combined.push(p2);
+                    }
+                    xAxisLabel = 'Quantity (q_A)';
+                } else {
+                    // Swapped: both curves against q_B changes
+                    labels = []; // Reset labels
+                    const priceDataA_swapped = [];
+                    
+                    for (let i = 0; i <= range; i += step) {
+                        const current_q2 = q2_base + i;
+                        labels.push(i);
+                        const { p1, p2 } = calculatePrices(q1_base, current_q2, b);
+                        priceDataA_swapped.push(p1);
+                        priceDataB_combined.push(p2);
+                    }
+                    
+                    // Replace the A curve data
+                    datasets[0].data = priceDataA_swapped;
+                    xAxisLabel = 'Quantity (q_B)';
                 }
-                 datasets.push({
+                
+                datasets.push({
                     label: 'Price of B (p_B)',
                     data: priceDataB_combined,
                     borderColor: 'rgb(219, 39, 119)',
@@ -305,7 +336,6 @@
                     tension: 0.4,
                     pointRadius: 0,
                 });
-                xAxisLabel = 'Quantity (q_A)';
             }
 
             const data = {
@@ -419,15 +449,44 @@
             tabA.classList.toggle('active-tab', tabName === 'A');
             tabB.classList.toggle('active-tab', tabName === 'B');
             tabCombined.classList.toggle('active-tab', tabName === 'Combined');
+            
+            // Show/hide combined controls
+            if (tabName === 'Combined') {
+                combinedControls.classList.remove('hidden');
+            } else {
+                combinedControls.classList.add('hidden');
+            }
+            
             createOrUpdateChart();
         }
 
         tabA.addEventListener('click', () => setActiveTab('A'));
         tabB.addEventListener('click', () => setActiveTab('B'));
         tabCombined.addEventListener('click', () => setActiveTab('Combined'));
+        
+        // Swap button functionality
+        swapButton.addEventListener('click', () => {
+            combinedSwapped = !combinedSwapped;
+            
+            // Update button text
+            if (combinedSwapped) {
+                swapButtonText.textContent = 'q_B → q_A';
+            } else {
+                swapButtonText.textContent = 'q_A → q_B';
+            }
+            
+            // Only update chart if we're in Combined view
+            if (activeChart === 'Combined') {
+                createOrUpdateChart();
+            }
+        });
 
         // --- Initial Load ---
-        window.onload = update;
+        window.onload = () => {
+            // Set initial tab state
+            setActiveTab('A');
+            update();
+        };
 
     </script>
 </body>
