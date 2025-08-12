@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LS-LMSR Two Condition Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .control-label, .value-display, .info-box h2, .tab-button {
+            font-family: 'Source Code Pro', 'Noto Sans TC', monospace;
+        }
+        .control-label {
+            @apply text-sm font-medium text-gray-600;
+        }
+        .value-display {
+            @apply text-lg font-bold text-indigo-600;
+        }
+        .info-box {
+            @apply bg-white p-6 rounded-xl shadow-md transition-all duration-300;
+        }
+        .control-button {
+            @apply w-8 h-8 rounded-full bg-gray-200 text-gray-800 font-bold text-lg flex items-center justify-center hover:bg-gray-300 transition-colors duration-200 flex-shrink-0;
+        }
+        .number-input {
+            @apply w-full text-center text-lg font-bold text-indigo-600 border-gray-300 rounded-md shadow-sm focus:border-indigo-400 focus:ring focus:ring-indigo-300 focus:ring-opacity-50;
+        }
+        .tab-button {
+            @apply py-2 px-4 text-sm font-medium text-center text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 focus:outline-none transition-colors duration-200;
+        }
+        .active-tab {
+            @apply text-indigo-600 border-indigo-500;
+        }
+        .variant-button-active {
+            @apply bg-white bg-opacity-20 text-white border border-white border-opacity-30;
+        }
+        .variant-button-inactive {
+            @apply bg-transparent text-white border border-white border-opacity-30 hover:bg-white hover:bg-opacity-20;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-6xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">LS-LMSR Simulator</h1>
+            <p class="mt-2 text-md text-gray-600">Liquidity-Sensitive Logarithmic Market Scoring Rule</p>
+        </header>
+
+        <!-- Integrated LS-LMSR Variant Selector & Current Model Banner -->
+        <div class="mb-6 p-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg">
+            <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+                <!-- Left side: Current Model Info -->
+                <div class="text-center md:text-left">
+                    <div class="flex items-center justify-center md:justify-start space-x-2 mb-2">
+                        <span class="text-sm font-medium">Current Model:</span>
+                        <span id="currentVariantName" class="text-lg font-bold">Chen & Pennock LS-LMSR</span>
+                    </div>
+                    <div id="currentVariantFormula" class="text-sm opacity-90">
+                        b(q) = b₀ + α × (|q_A| + |q_B|)
+                    </div>
+                </div>
+                
+                <!-- Right side: Variant Selection Buttons -->
+                <div class="flex flex-col space-y-2">
+                    <div class="flex space-x-3">
+                        <button id="variant1" class="px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 bg-white bg-opacity-20 text-white border border-white border-opacity-30 hover:bg-opacity-30">
+                            Chen & Pennock
+                        </button>
+                        <button id="variant2" class="px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 bg-transparent text-white border border-white border-opacity-30 hover:bg-white hover:bg-opacity-20">
+                            Othman & Sandholm
+                        </button>
+                    </div>
+                    <div id="variantDescription" class="text-xs text-center opacity-80">
+                        Dynamic liquidity: b(q) = b₀ + α × ||q||₁
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Controls Section -->
+            <div class="md:col-span-1 space-y-6">
+                <div class="info-box">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">Parameters</h2>
+                    
+                    <!-- Base Liquidity (b₀) Control -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label for="b0Input" class="control-label">Base Liquidity (b₀):</label>
+                            <span id="b0Value" class="value-display">100</span>
+                        </div>
+                        <p class="text-xs text-gray-500" style="font-family: 'Noto Sans TC', sans-serif;">基礎流動性參數</p>
+                        <div class="flex items-center space-x-3">
+                            <button id="b0Decrement" class="control-button">-</button>
+                            <input id="b0Input" type="number" value="100" step="10" min="10" max="100000" class="number-input">
+                            <button id="b0Increment" class="control-button">+</button>
+                        </div>
+                        <input id="b0Slider" type="range" min="10" max="100000" value="100" step="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>10</span>
+                            <span>100k</span>
+                        </div>
+                    </div>
+
+                    <!-- Alpha (α) Control -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label for="alphaSlider" class="control-label">Alpha (α):</label>
+                            <span id="alphaValue" class="value-display">0.1</span>
+                        </div>
+                        <p class="text-xs text-gray-500" style="font-family: 'Noto Sans TC', sans-serif;">流動性敏感度參數</p>
+                        <div class="flex items-center space-x-3">
+                            <button id="alphaDecrement" class="control-button">-</button>
+                            <input id="alphaSlider" type="range" min="0" max="1" value="0.1" step="0.01" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <button id="alphaIncrement" class="control-button">+</button>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Shares of Outcome A Control -->
+                    <div class="space-y-2">
+                        <label for="q1Input" class="control-label">Quantity (q_A):</label>
+                        <div class="flex items-center space-x-3">
+                            <button id="q1Decrement" class="control-button">-</button>
+                            <input id="q1Input" type="number" value="0" step="1" min="0" class="number-input">
+                            <button id="q1Increment" class="control-button">+</button>
+                        </div>
+                        <input id="q1Slider" type="range" min="0" max="500" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                    </div>
+                    
+                    <hr class="my-4">
+
+                    <!-- Shares of Outcome B Control -->
+                    <div class="space-y-2">
+                        <label for="q2Input" class="control-label">Quantity (q_B):</label>
+                        <div class="flex items-center space-x-3">
+                            <button id="q2Decrement" class="control-button">-</button>
+                            <input id="q2Input" type="number" value="0" step="1" min="0" class="number-input">
+                            <button id="q2Increment" class="control-button">+</button>
+                        </div>
+                        <input id="q2Slider" type="range" min="0" max="500" value="0" step="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Chart Range Control -->
+                    <div class="space-y-2">
+                        <label for="rangeInput" class="control-label">Chart Range:</label>
+                        <div class="flex items-center space-x-3">
+                            <button id="rangeDecrement" class="control-button">-</button>
+                            <input id="rangeInput" type="number" value="200" step="10" min="10" max="100000000" class="number-input">
+                            <button id="rangeIncrement" class="control-button">+</button>
+                        </div>
+                        <input id="rangeSlider" type="range" min="10" max="100000000" value="200" step="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>10</span>
+                            <span>100M</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2">Current State</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="control-label">Price (p_A):</p>
+                            <p id="price1" class="value-display">0.500</p>
+                        </div>
+                        <div>
+                            <p class="control-label">Price (p_B):</p>
+                            <p id="price2" class="value-display">0.500</p>
+                        </div>
+                        <div>
+                            <p class="control-label">Dynamic b:</p>
+                            <p id="dynamicB" class="value-display">100.0</p>
+                        </div>
+                        <div>
+                            <p class="control-label">Total Cost (C):</p>
+                            <p id="cost" class="value-display">69.31</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart and Formula Section -->
+            <div class="md:col-span-2 space-y-6">
+                <div class="info-box">
+                    
+                    <div class="flex justify-between border-b border-gray-200 mb-4">
+                        <button id="tabA" class="tab-button active-tab">Price Curve A</button>
+                        <button id="tabB" class="tab-button">Price Curve B</button>
+                        <button id="tabCombined" class="tab-button">Combined</button>
+                    </div>
+                    <div id="combinedControls" class="hidden mb-4 flex items-center justify-center space-x-4">
+                        <span class="text-sm text-gray-600">X-axis:</span>
+                        <button id="swapButton" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors duration-200 text-sm font-medium">
+                            <span id="swapButtonText">q_A → q_B</span>
+                        </button>
+                    </div>
+                    <canvas id="lslmsrChart"></canvas>
+                </div>
+                
+                <div class="info-box bg-indigo-50 border-l-4 border-indigo-400">
+                    <h2 class="text-xl font-bold mb-4">Core Formulas</h2>
+                    <div id="formulas" class="space-y-4 text-sm text-gray-700">
+                        <!-- Chen & Pennock Formulas -->
+                        <div id="variant1Formulas">
+                            <p><strong>Dynamic Liquidity:</strong></p>
+                            <div class="bg-white p-4 rounded-lg text-center text-lg">
+                                $$b(\mathbf{q}) = b_0 + \alpha \cdot ||\mathbf{q}||_1$$
+                            </div>
+                            <p><strong>Cost Function:</strong></p>
+                            <div class="bg-white p-4 rounded-lg text-center text-lg">
+                                $$C(\mathbf{q}) = b(\mathbf{q}) \cdot \ln\left(\sum_{i} e^{q_i / b(\mathbf{q})}\right)$$
+                            </div>
+                            <p><strong>Price Function:</strong></p>
+                            <div class="bg-white p-4 rounded-lg text-center text-lg">
+                                $$p_i(\mathbf{q}) = \frac{e^{q_i / b(\mathbf{q})}}{\sum_{j} e^{q_j / b(\mathbf{q})}}$$
+                            </div>
+                        </div>
+                        
+                        <!-- Othman & Sandholm Formulas -->
+                        <div id="variant2Formulas" class="hidden">
+                            <p><strong>Dynamic Liquidity:</strong></p>
+                            <div class="bg-white p-4 rounded-lg text-center text-lg">
+                                $$b(\mathbf{q}) = b_0 + \alpha \cdot \sqrt{\sum_{i} q_i^2}$$
+                            </div>
+                            <p><strong>Cost Function:</strong></p>
+                            <div class="bg-white p-4 rounded-lg text-center text-lg">
+                                $$C(\mathbf{q}) = b(\mathbf{q}) \cdot \ln\left(\sum_{i} e^{q_i / b(\mathbf{q})}\right)$$
+                            </div>
+                            <p><strong>Price Function:</strong></p>
+                            <div class="bg-white p-4 rounded-lg text-center text-lg">
+                                $$p_i(\mathbf{q}) = \frac{e^{q_i / b(\mathbf{q})}}{\sum_{j} e^{q_j / b(\mathbf{q})}}$$
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        // --- State ---
+        let activeChart = 'A'; // 'A', 'B', or 'Combined'
+        let combinedSwapped = false; // Track if A/B are swapped in Combined view
+        let currentVariant = 1; // 1 for Chen & Pennock, 2 for Othman & Sandholm
+
+        // --- DOM Elements ---
+        const b0Slider = document.getElementById('b0Slider');
+        const alphaSlider = document.getElementById('alphaSlider');
+        const q1Slider = document.getElementById('q1Slider');
+        const q2Slider = document.getElementById('q2Slider');
+        const rangeSlider = document.getElementById('rangeSlider');
+        
+        const b0Value = document.getElementById('b0Value');
+        const b0Input = document.getElementById('b0Input');
+        const alphaValue = document.getElementById('alphaValue');
+        const q1Input = document.getElementById('q1Input');
+        const q2Input = document.getElementById('q2Input');
+        const rangeInput = document.getElementById('rangeInput');
+
+        const price1Display = document.getElementById('price1');
+        const price2Display = document.getElementById('price2');
+        const dynamicBDisplay = document.getElementById('dynamicB');
+        const costDisplay = document.getElementById('cost');
+
+        const b0Decrement = document.getElementById('b0Decrement');
+        const b0Increment = document.getElementById('b0Increment');
+        const alphaDecrement = document.getElementById('alphaDecrement');
+        const alphaIncrement = document.getElementById('alphaIncrement');
+        const q1Decrement = document.getElementById('q1Decrement');
+        const q1Increment = document.getElementById('q1Increment');
+        const q2Decrement = document.getElementById('q2Decrement');
+        const q2Increment = document.getElementById('q2Increment');
+        const rangeDecrement = document.getElementById('rangeDecrement');
+        const rangeIncrement = document.getElementById('rangeIncrement');
+
+        const tabA = document.getElementById('tabA');
+        const tabB = document.getElementById('tabB');
+        const tabCombined = document.getElementById('tabCombined');
+        const combinedControls = document.getElementById('combinedControls');
+        const swapButton = document.getElementById('swapButton');
+        const swapButtonText = document.getElementById('swapButtonText');
+
+        const variant1Button = document.getElementById('variant1');
+        const variant2Button = document.getElementById('variant2');
+        const variantDescription = document.getElementById('variantDescription');
+        const variant1Formulas = document.getElementById('variant1Formulas');
+        const variant2Formulas = document.getElementById('variant2Formulas');
+        const currentVariantName = document.getElementById('currentVariantName');
+        const currentVariantFormula = document.getElementById('currentVariantFormula');
+
+        const ctx = document.getElementById('lslmsrChart').getContext('2d');
+        let chart;
+
+        // --- LS-LMSR Core Functions ---
+        function calculateDynamicB(q1, q2, b0, alpha, variant) {
+            if (variant === 1) {
+                // Chen & Pennock: b(q) = b0 + α * ||q||_1
+                return b0 + alpha * (Math.abs(q1) + Math.abs(q2));
+            } else {
+                // Othman & Sandholm: b(q) = b0 + α * ||q||_2
+                return b0 + alpha * Math.sqrt(q1 * q1 + q2 * q2);
+            }
+        }
+
+        function calculateCost(q1, q2, b0, alpha, variant) {
+            const b = calculateDynamicB(q1, q2, b0, alpha, variant);
+            return b * Math.log(Math.exp(q1 / b) + Math.exp(q2 / b));
+        }
+
+        function calculatePrices(q1, q2, b0, alpha, variant) {
+            const b = calculateDynamicB(q1, q2, b0, alpha, variant);
+            const exp_q1_b = Math.exp(q1 / b);
+            const exp_q2_b = Math.exp(q2 / b);
+            const denominator = exp_q1_b + exp_q2_b;
+            const p1 = exp_q1_b / denominator;
+            const p2 = exp_q2_b / denominator;
+            return { p1, p2, b };
+        }
+
+        // --- Charting Function ---
+        function createOrUpdateChart() {
+            const b0 = parseFloat(b0Slider.value);
+            const alpha = parseFloat(alphaSlider.value);
+            const q1_base = parseFloat(q1Slider.value);
+            const q2_base = parseFloat(q2Slider.value);
+            const range = parseFloat(rangeSlider.value);
+
+            // Dynamically adjust step to keep chart smooth but performant
+            const step = Math.max(1, Math.round(range / 40));
+            
+            let datasets = [];
+            let labels = [];
+            let xAxisLabel = '';
+
+            // Generate data for Price Curve A
+            if (activeChart === 'A' || activeChart === 'Combined') {
+                const priceDataA = [];
+                const labelsA = [];
+                 for (let i = 0; i <= range; i += step) {
+                    const current_q1 = q1_base + i;
+                    labelsA.push(i);
+                    const { p1 } = calculatePrices(current_q1, q2_base, b0, alpha, currentVariant);
+                    priceDataA.push(p1);
+                }
+                datasets.push({
+                    label: 'Price of A (p_A)',
+                    data: priceDataA,
+                    borderColor: 'rgb(79, 70, 229)',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                });
+                if (activeChart === 'A') {
+                    labels = labelsA;
+                    xAxisLabel = 'Quantity (q_A)';
+                }
+            }
+
+            // Generate data for Price Curve B
+            if (activeChart === 'B') {
+                const priceDataB = [];
+                 for (let i = 0; i <= range; i += step) {
+                    const current_q2 = q2_base + i;
+                    labels.push(i);
+                    const { p2 } = calculatePrices(q1_base, current_q2, b0, alpha, currentVariant);
+                    priceDataB.push(p2);
+                }
+                datasets.push({
+                    label: 'Price of B (p_B)',
+                    data: priceDataB,
+                    borderColor: 'rgb(219, 39, 119)',
+                    backgroundColor: 'rgba(219, 39, 119, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                });
+                xAxisLabel = 'Quantity (q_B)';
+            }
+            
+            // Generate data for B in Combined view
+            if (activeChart === 'Combined') {
+                const priceDataB_combined = [];
+                
+                if (!combinedSwapped) {
+                    // Default: both curves against q_A changes
+                    for (let i = 0; i <= range; i += step) {
+                        const current_q1 = q1_base + i;
+                        if(labels.length < (range / step + 1)) labels.push(i);
+                        const { p2 } = calculatePrices(current_q1, q2_base, b0, alpha, currentVariant);
+                        priceDataB_combined.push(p2);
+                    }
+                    xAxisLabel = 'Quantity (q_A)';
+                } else {
+                    // Swapped: both curves against q_B changes
+                    labels = []; // Reset labels
+                    const priceDataA_swapped = [];
+                    
+                    for (let i = 0; i <= range; i += step) {
+                        const current_q2 = q2_base + i;
+                        labels.push(i);
+                        const { p1, p2 } = calculatePrices(q1_base, current_q2, b0, alpha, currentVariant);
+                        priceDataA_swapped.push(p1);
+                        priceDataB_combined.push(p2);
+                    }
+                    
+                    // Replace the A curve data
+                    datasets[0].data = priceDataA_swapped;
+                    xAxisLabel = 'Quantity (q_B)';
+                }
+                
+                datasets.push({
+                    label: 'Price of B (p_B)',
+                    data: priceDataB_combined,
+                    borderColor: 'rgb(219, 39, 119)',
+                    backgroundColor: 'rgba(219, 39, 119, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                });
+            }
+
+            const data = {
+                labels: labels,
+                datasets: datasets
+            };
+
+            if (chart) {
+                chart.data = data;
+                chart.options.scales.x.title.text = xAxisLabel;
+                chart.update('none');
+            } else {
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: data,
+                    options: {
+                        animation: false,
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: { beginAtZero: true, max: 1.0, title: { display: true, text: 'Price' } },
+                            x: { beginAtZero: true, title: { display: true, text: xAxisLabel } }
+                        },
+                        plugins: {
+                            tooltip: { mode: 'index', intersect: false },
+                            zoom: {
+                                pan: {
+                                    enabled: true,
+                                    mode: 'x'
+                                },
+                                zoom: {
+                                    wheel: {
+                                        enabled: true,
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'x',
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // --- Variant Switching ---
+        function setVariant(variant) {
+            currentVariant = variant;
+            
+            if (variant === 1) {
+                variant1Button.className = 'px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 variant-button-active';
+                variant2Button.className = 'px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 variant-button-inactive';
+                variant1Formulas.classList.remove('hidden');
+                variant2Formulas.classList.add('hidden');
+                variantDescription.textContent = 'Dynamic liquidity: b(q) = b₀ + α × ||q||₁';
+                
+                // Update banner
+                currentVariantName.textContent = 'Chen & Pennock LS-LMSR';
+                currentVariantFormula.textContent = 'b(q) = b₀ + α × (|q_A| + |q_B|)';
+            } else {
+                variant1Button.className = 'px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 variant-button-inactive';
+                variant2Button.className = 'px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 variant-button-active';
+                variant1Formulas.classList.add('hidden');
+                variant2Formulas.classList.remove('hidden');
+                variantDescription.textContent = 'Dynamic liquidity: b(q) = b₀ + α × ||q||₂';
+                
+                // Update banner
+                currentVariantName.textContent = 'Othman & Sandholm LS-LMSR';
+                currentVariantFormula.textContent = 'b(q) = b₀ + α × √(q_A² + q_B²)';
+            }
+            
+            update();
+        }
+
+        // --- Main Update Function ---
+        function update() {
+            const b0 = parseFloat(b0Slider.value);
+            const alpha = parseFloat(alphaSlider.value);
+            const q1 = parseFloat(q1Slider.value);
+            const q2 = parseFloat(q2Slider.value);
+            const range = parseFloat(rangeSlider.value);
+
+            b0Value.textContent = b0;
+            b0Input.value = b0;
+            alphaValue.textContent = alpha.toFixed(2);
+            q1Input.value = q1;
+            q2Input.value = q2;
+            rangeInput.value = range;
+
+            const { p1, p2, b } = calculatePrices(q1, q2, b0, alpha, currentVariant);
+            const cost = calculateCost(q1, q2, b0, alpha, currentVariant);
+
+            price1Display.textContent = p1.toFixed(3);
+            price2Display.textContent = p2.toFixed(3);
+            dynamicBDisplay.textContent = b.toFixed(1);
+            costDisplay.textContent = cost.toFixed(2);
+            
+            createOrUpdateChart();
+        }
+
+        // --- Event Listeners ---
+        b0Slider.addEventListener('input', () => {
+            b0Input.value = b0Slider.value;
+            update();
+        });
+        
+        b0Input.addEventListener('input', () => {
+            const val = parseInt(b0Input.value);
+            if (!isNaN(val) && val >= 10 && val <= 100000) {
+                b0Slider.value = val;
+                update();
+            } else if (val < 10) {
+                b0Input.value = 10;
+                b0Slider.value = 10;
+                update();
+            } else if (val > 100000) {
+                b0Input.value = 100000;
+                b0Slider.value = 100000;
+                update();
+            }
+        });
+        alphaSlider.addEventListener('input', update);
+        q1Slider.addEventListener('input', update);
+        q2Slider.addEventListener('input', update);
+        rangeSlider.addEventListener('input', () => {
+            rangeInput.value = rangeSlider.value;
+            update();
+        });
+        
+        rangeInput.addEventListener('input', () => {
+            const val = parseInt(rangeInput.value);
+            if (!isNaN(val) && val >= 10 && val <= 100000000) {
+                rangeSlider.value = val;
+                update();
+            } else if (val < 10) {
+                rangeInput.value = 10;
+                rangeSlider.value = 10;
+                update();
+            } else if (val > 100000000) {
+                rangeInput.value = 100000000;
+                rangeSlider.value = 100000000;
+                update();
+            }
+        });
+
+        q1Input.addEventListener('input', () => {
+            const val = parseInt(q1Input.value);
+            if (!isNaN(val) && val >= 0 && val <= q1Slider.max) {
+                q1Slider.value = val;
+                update();
+            } else if (val < 0) {
+                q1Input.value = 0;
+                q1Slider.value = 0;
+                update();
+            }
+        });
+        q2Input.addEventListener('input', () => {
+            const val = parseInt(q2Input.value);
+            if (!isNaN(val) && val >= 0 && val <= q2Slider.max) {
+                q2Slider.value = val;
+                update();
+            } else if (val < 0) {
+                q2Input.value = 0;
+                q2Slider.value = 0;
+                update();
+            }
+        });
+
+        b0Decrement.addEventListener('click', () => { b0Slider.stepDown(); update(); });
+        b0Increment.addEventListener('click', () => { b0Slider.stepUp(); update(); });
+        alphaDecrement.addEventListener('click', () => { alphaSlider.stepDown(); update(); });
+        alphaIncrement.addEventListener('click', () => { alphaSlider.stepUp(); update(); });
+        q1Decrement.addEventListener('click', () => { q1Slider.stepDown(); update(); });
+        q1Increment.addEventListener('click', () => { q1Slider.stepUp(); update(); });
+        q2Decrement.addEventListener('click', () => { q2Slider.stepDown(); update(); });
+        q2Increment.addEventListener('click', () => { q2Slider.stepUp(); update(); });
+        rangeDecrement.addEventListener('click', () => { rangeSlider.stepDown(); update(); });
+        rangeIncrement.addEventListener('click', () => { rangeSlider.stepUp(); update(); });
+
+        // Tab Listeners
+        function setActiveTab(tabName) {
+            activeChart = tabName;
+            tabA.classList.toggle('active-tab', tabName === 'A');
+            tabB.classList.toggle('active-tab', tabName === 'B');
+            tabCombined.classList.toggle('active-tab', tabName === 'Combined');
+            
+            // Show/hide combined controls
+            if (tabName === 'Combined') {
+                combinedControls.classList.remove('hidden');
+            } else {
+                combinedControls.classList.add('hidden');
+            }
+            
+            createOrUpdateChart();
+        }
+
+        tabA.addEventListener('click', () => setActiveTab('A'));
+        tabB.addEventListener('click', () => setActiveTab('B'));
+        tabCombined.addEventListener('click', () => setActiveTab('Combined'));
+        
+        // Swap button functionality
+        swapButton.addEventListener('click', () => {
+            combinedSwapped = !combinedSwapped;
+            
+            // Update button text
+            if (combinedSwapped) {
+                swapButtonText.textContent = 'q_B → q_A';
+            } else {
+                swapButtonText.textContent = 'q_A → q_B';
+            }
+            
+            // Only update chart if we're in Combined view
+            if (activeChart === 'Combined') {
+                createOrUpdateChart();
+            }
+        });
+
+        // Variant button listeners
+        variant1Button.addEventListener('click', () => setVariant(1));
+        variant2Button.addEventListener('click', () => setVariant(2));
+
+        // --- Initial Load ---
+        window.onload = () => {
+            // Set initial tab state
+            setActiveTab('A');
+            setVariant(1);
+            update();
+        };
+
+    </script>
+</body>
+</html>
