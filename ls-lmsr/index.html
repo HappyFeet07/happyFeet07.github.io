@@ -111,13 +111,13 @@
                         <p class="text-xs text-gray-500" style="font-family: 'Noto Sans TC', sans-serif;">基礎流動性參數</p>
                         <div class="flex items-center space-x-3">
                             <button id="b0Decrement" class="control-button">-</button>
-                            <input id="b0Input" type="number" value="100" step="10" min="10" max="100000" class="number-input">
+                            <input id="b0Input" type="number" value="100" step="10" min="10" max="100000000" class="number-input">
                             <button id="b0Increment" class="control-button">+</button>
                         </div>
-                        <input id="b0Slider" type="range" min="10" max="100000" value="100" step="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <input id="b0Slider" type="range" min="10" max="100000000" value="100" step="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
                         <div class="flex justify-between text-xs text-gray-500">
                             <span>10</span>
-                            <span>100k</span>
+                            <span>100M</span>
                         </div>
                     </div>
 
@@ -474,7 +474,29 @@
                         maintainAspectRatio: true,
                         scales: {
                             y: { beginAtZero: true, max: 1.0, title: { display: true, text: 'Price' } },
-                            x: { beginAtZero: true, title: { display: true, text: xAxisLabel } }
+                            x: { 
+                                beginAtZero: true, 
+                                title: { display: true, text: xAxisLabel },
+                                ticks: {
+                                    callback: function(value, index, values) {
+                                        const range = parseFloat(rangeSlider.value);
+                                        const step = Math.max(1, Math.round(range / 40));
+                                        const actualValue = value * step;
+                                        
+                                        if (actualValue === 0) {
+                                            return '0';
+                                        }
+                                        
+                                        if (actualValue >= 1000) {
+                                            const exponent = Math.floor(Math.log10(Math.abs(actualValue)));
+                                            const coefficient = (actualValue / Math.pow(10, exponent)).toFixed(1);
+                                            return coefficient + '×10' + exponent.toString().split('').map(digit => '⁰¹²³⁴⁵⁶⁷⁸⁹'[digit]).join('');
+                                        } else {
+                                            return actualValue;
+                                        }
+                                    }
+                                }
+                            }
                         },
                         plugins: {
                             tooltip: { mode: 'index', intersect: false },
@@ -562,16 +584,16 @@
         
         b0Input.addEventListener('input', () => {
             const val = parseInt(b0Input.value);
-            if (!isNaN(val) && val >= 10 && val <= 100000) {
+            if (!isNaN(val) && val >= 10 && val <= 100000000) {
                 b0Slider.value = val;
                 update();
             } else if (val < 10) {
                 b0Input.value = 10;
                 b0Slider.value = 10;
                 update();
-            } else if (val > 100000) {
-                b0Input.value = 100000;
-                b0Slider.value = 100000;
+            } else if (val > 100000000) {
+                b0Input.value = 100000000;
+                b0Slider.value = 100000000;
                 update();
             }
         });
