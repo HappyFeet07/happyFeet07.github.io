@@ -124,14 +124,19 @@
                     <!-- Alpha (α) Control -->
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <label for="alphaSlider" class="control-label">Alpha (α):</label>
+                            <label for="alphaInput" class="control-label">Alpha (α):</label>
                             <span id="alphaValue" class="value-display">0.1</span>
                         </div>
                         <p class="text-xs text-gray-500" style="font-family: 'Noto Sans TC', sans-serif;">流動性敏感度參數</p>
                         <div class="flex items-center space-x-3">
                             <button id="alphaDecrement" class="control-button">-</button>
-                            <input id="alphaSlider" type="range" min="0" max="1" value="0.1" step="0.01" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <input id="alphaInput" type="number" value="0.1" min="0" step="0.000001" class="number-input">
                             <button id="alphaIncrement" class="control-button">+</button>
+                        </div>
+                        <input id="alphaSlider" type="range" min="0" max="1" value="0.1" step="0.000001" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>0</span>
+                            <span>1</span>
                         </div>
                     </div>
 
@@ -285,6 +290,7 @@
         const b0Value = document.getElementById('b0Value');
         const b0Input = document.getElementById('b0Input');
         const alphaValue = document.getElementById('alphaValue');
+        const alphaInput = document.getElementById('alphaInput');
         const q1Input = document.getElementById('q1Input');
         const q2Input = document.getElementById('q2Input');
         const rangeInput = document.getElementById('rangeInput');
@@ -553,14 +559,15 @@
         // --- Main Update Function ---
         function update() {
             const b0 = parseFloat(b0Slider.value);
-            const alpha = parseFloat(alphaSlider.value);
+            const alpha = parseFloat(alphaInput.value);
             const q1 = parseFloat(q1Slider.value);
             const q2 = parseFloat(q2Slider.value);
             const range = parseFloat(rangeSlider.value);
 
             b0Value.textContent = b0;
             b0Input.value = b0;
-            alphaValue.textContent = alpha.toFixed(2);
+            alphaValue.textContent = alpha.toFixed(6);
+            alphaSlider.value = alpha;
             q1Input.value = q1;
             q2Input.value = q2;
             rangeInput.value = range;
@@ -597,7 +604,11 @@
                 update();
             }
         });
-        alphaSlider.addEventListener('input', update);
+        alphaInput.addEventListener('input', update);
+        alphaSlider.addEventListener('input', () => {
+            alphaInput.value = alphaSlider.value;
+            update();
+        });
         q1Slider.addEventListener('input', update);
         q2Slider.addEventListener('input', update);
         rangeSlider.addEventListener('input', () => {
@@ -654,8 +665,18 @@
 
         b0Decrement.addEventListener('click', () => { b0Slider.stepDown(); update(); });
         b0Increment.addEventListener('click', () => { b0Slider.stepUp(); update(); });
-        alphaDecrement.addEventListener('click', () => { alphaSlider.stepDown(); update(); });
-        alphaIncrement.addEventListener('click', () => { alphaSlider.stepUp(); update(); });
+        alphaDecrement.addEventListener('click', () => { 
+            const currentValue = parseFloat(alphaInput.value);
+            const newValue = Math.max(0, currentValue - 0.000001);
+            alphaInput.value = newValue.toFixed(6);
+            update(); 
+        });
+        alphaIncrement.addEventListener('click', () => { 
+            const currentValue = parseFloat(alphaInput.value);
+            const newValue = currentValue + 0.000001;
+            alphaInput.value = newValue.toFixed(6);
+            update(); 
+        });
         q1Decrement.addEventListener('click', () => { q1Slider.stepDown(); update(); });
         q1Increment.addEventListener('click', () => { q1Slider.stepUp(); update(); });
         q2Decrement.addEventListener('click', () => { q2Slider.stepDown(); update(); });
