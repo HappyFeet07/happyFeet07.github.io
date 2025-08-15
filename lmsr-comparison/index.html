@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMSR vs LS-LMSR Comparison</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 400px 1fr;
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .method-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .input-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .calculate-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .calculate-btn:hover {
+            background-color: #45a049;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        .divider {
+            margin: 20px 0;
+            border-top: 2px solid #eee;
+        }
+        .parameter-section {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .result-section {
+            background-color: #fff8dc;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .price-coordinate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 80px;
+        }
+        .coordinate-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+        .coordinate-value {
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .start-coordinate {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        .end-coordinate {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+        .price-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 10px 0;
+            flex-grow: 1;
+            align-items: stretch;
+        }
+        .cost-display {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .impact-display {
+            background: linear-gradient(135deg, #e0c3fc 0%, #9bb5ff 100%);
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; color: #333;">LMSR vs LS-LMSR Comparison Tool</h1>
+    
+    <div class="container">
+        <!-- LMSR Section -->
+        <div class="method-section">
+            <h2>LMSR (Logarithmic Market Scoring Rule)</h2>
+            
+            <div class="parameter-section">
+                <div class="input-group">
+                    <label for="lmsr-b">b 值 (Liquidity Parameter):</label>
+                    <input type="number" id="lmsr-b" value="100" step="0.1">
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h3>計算結果</h3>
+                <div id="lmsr-results">
+                    <div class="cost-display">
+                        <div>User Cost: <span id="lmsr-cost">-</span></div>
+                    </div>
+                    
+                    <div class="price-section">
+                        <div class="price-coordinate start-coordinate">
+                            <div class="coordinate-label">Start Point</div>
+                            <div class="coordinate-value">(<span id="lmsr-start-price-yes">-</span>, <span id="lmsr-start-price-no">-</span>)</div>
+                        </div>
+                        <div class="price-coordinate end-coordinate">
+                            <div class="coordinate-label">End Point</div>
+                            <div class="coordinate-value">(<span id="lmsr-end-price-yes">-</span>, <span id="lmsr-end-price-no">-</span>)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="impact-display">
+                        Price Impact: <span id="lmsr-price-impact">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Input Section -->
+        <div class="input-section">
+            <h2>交易參數</h2>
+            
+            <div class="input-group">
+                <label>初始狀態 Quantities:</label>
+                <div class="input-row">
+                    <div>
+                        <label for="initial-qa">Quantity A:</label>
+                        <input type="number" id="initial-qa" value="100" step="0.1">
+                    </div>
+                    <div>
+                        <label for="initial-qb">Quantity B:</label>
+                        <input type="number" id="initial-qb" value="100" step="0.1">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label>結束狀態 Quantities:</label>
+                <div class="input-row">
+                    <div>
+                        <label for="final-qa">Quantity A:</label>
+                        <input type="number" id="final-qa" value="110" step="0.1">
+                    </div>
+                    <div>
+                        <label for="final-qb">Quantity B:</label>
+                        <input type="number" id="final-qb" value="90" step="0.1">
+                    </div>
+                </div>
+            </div>
+            
+            <button class="calculate-btn" onclick="calculateAll()">計算比較</button>
+        </div>
+        
+        <!-- LS-LMSR Section -->
+        <div class="method-section">
+            <h2>LS-LMSR (Othman's Method)</h2>
+            
+            <div class="parameter-section">
+                <div class="input-group">
+                    <label for="lslmsr-alpha">α (Alpha) 值:</label>
+                    <input type="number" id="lslmsr-alpha" value="0.1" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label for="lslmsr-b0">b₀ (Initial Liquidity):</label>
+                    <input type="number" id="lslmsr-b0" value="10" step="0.1">
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h3>計算結果</h3>
+                <div id="lslmsr-results">
+                    <div class="cost-display">
+                        <div>User Cost: <span id="lslmsr-cost">-</span></div>
+                    </div>
+                    
+                    <div class="price-section">
+                        <div class="price-coordinate start-coordinate">
+                            <div class="coordinate-label">Start Point</div>
+                            <div class="coordinate-value">(<span id="lslmsr-start-price-yes">-</span>, <span id="lslmsr-start-price-no">-</span>)</div>
+                        </div>
+                        <div class="price-coordinate end-coordinate">
+                            <div class="coordinate-label">End Point</div>
+                            <div class="coordinate-value">(<span id="lslmsr-end-price-yes">-</span>, <span id="lslmsr-end-price-no">-</span>)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="impact-display">
+                        Price Impact: <span id="lslmsr-price-impact">-</span>
+                    </div>
+                    
+                    <div class="cost-display" style="background: linear-gradient(135deg, #d4a574 0%, #c49060 100%); margin-top: 10px;">
+                        <div>Final b value: <span id="lslmsr-final-b">-</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function safeExp(x) {
+            // 避免指數函數溢出，限制最大值
+            const maxValue = 700; // Math.exp(700) 接近 JavaScript 數值上限
+            return Math.exp(Math.min(x, maxValue));
+        }
+        
+        function calculatePrice(qa, qb, b) {
+            // 使用數值穩定的方法計算價格
+            const diff = (qa - qb) / b;
+            if (diff > 700) {
+                return { priceYes: 1.0, priceNo: 0.0 };
+            } else if (diff < -700) {
+                return { priceYes: 0.0, priceNo: 1.0 };
+            } else {
+                const expDiff = Math.exp(diff);
+                const priceYes = expDiff / (1 + expDiff);
+                const priceNo = 1 / (1 + expDiff);
+                return { priceYes, priceNo };
+            }
+        }
+        
+        function calculateCost(qa, qb, b) {
+            // 使用 log-sum-exp 技巧避免數值溢出
+            const maxQ = Math.max(qa, qb);
+            const qa_norm = qa - maxQ;
+            const qb_norm = qb - maxQ;
+            return maxQ + b * Math.log(Math.exp(qa_norm/b) + Math.exp(qb_norm/b));
+        }
+
+        function calculateLMSR() {
+            const b = parseFloat(document.getElementById('lmsr-b').value);
+            const qa0 = parseFloat(document.getElementById('initial-qa').value);
+            const qb0 = parseFloat(document.getElementById('initial-qb').value);
+            const qa1 = parseFloat(document.getElementById('final-qa').value);
+            const qb1 = parseFloat(document.getElementById('final-qb').value);
+            
+            // 檢查輸入有效性
+            if (b <= 0) {
+                alert('b 值必須大於 0');
+                return;
+            }
+            
+            // LMSR Cost function: 使用數值穩定的版本
+            const initialCost = calculateCost(qa0, qb0, b);
+            const finalCost = calculateCost(qa1, qb1, b);
+            const userCost = finalCost - initialCost;
+            
+            // LMSR Prices: 使用數值穩定的計算
+            const startPrices = calculatePrice(qa0, qb0, b);
+            const endPrices = calculatePrice(qa1, qb1, b);
+            
+            const priceImpact = Math.abs(endPrices.priceYes - startPrices.priceYes);
+            
+            document.getElementById('lmsr-cost').textContent = userCost.toFixed(4);
+            document.getElementById('lmsr-start-price-yes').textContent = startPrices.priceYes.toFixed(4);
+            document.getElementById('lmsr-start-price-no').textContent = startPrices.priceNo.toFixed(4);
+            document.getElementById('lmsr-end-price-yes').textContent = endPrices.priceYes.toFixed(4);
+            document.getElementById('lmsr-end-price-no').textContent = endPrices.priceNo.toFixed(4);
+            document.getElementById('lmsr-price-impact').textContent = (priceImpact * 100).toFixed(2) + '%';
+        }
+        
+        function calculateLSLMSR() {
+            const alpha = parseFloat(document.getElementById('lslmsr-alpha').value);
+            const b0 = parseFloat(document.getElementById('lslmsr-b0').value);
+            const qa0 = parseFloat(document.getElementById('initial-qa').value);
+            const qb0 = parseFloat(document.getElementById('initial-qb').value);
+            const qa1 = parseFloat(document.getElementById('final-qa').value);
+            const qb1 = parseFloat(document.getElementById('final-qb').value);
+            
+            // 檢查輸入有效性
+            if (b0 <= 0) {
+                alert('b0 值必須大於 0');
+                return;
+            }
+            if (alpha < 0) {
+                alert('alpha 值必須大於等於 0');
+                return;
+            }
+            
+            // LS-LMSR with Othman's approach
+            // Volume of trade
+            const volumeA = Math.abs(qa1 - qa0);
+            const volumeB = Math.abs(qb1 - qb0);
+            const totalVolume = volumeA + volumeB;
+            
+            // Update b according to LS-LMSR: b_new = b0 + alpha * volume
+            const bFinal = b0 + alpha * totalVolume;
+            
+            // Calculate cost using updated b value
+            // For LS-LMSR, we use the average b value during the trade
+            const bAverage = (b0 + bFinal) / 2;
+            
+            const initialCost = calculateCost(qa0, qb0, bAverage);
+            const finalCost = calculateCost(qa1, qb1, bAverage);
+            const userCost = finalCost - initialCost;
+            
+            // LS-LMSR Prices using average b
+            const startPrices = calculatePrice(qa0, qb0, bAverage);
+            const endPrices = calculatePrice(qa1, qb1, bAverage);
+            
+            const priceImpact = Math.abs(endPrices.priceYes - startPrices.priceYes);
+            
+            document.getElementById('lslmsr-cost').textContent = userCost.toFixed(4);
+            document.getElementById('lslmsr-start-price-yes').textContent = startPrices.priceYes.toFixed(4);
+            document.getElementById('lslmsr-start-price-no').textContent = startPrices.priceNo.toFixed(4);
+            document.getElementById('lslmsr-end-price-yes').textContent = endPrices.priceYes.toFixed(4);
+            document.getElementById('lslmsr-end-price-no').textContent = endPrices.priceNo.toFixed(4);
+            document.getElementById('lslmsr-price-impact').textContent = (priceImpact * 100).toFixed(2) + '%';
+            document.getElementById('lslmsr-final-b').textContent = bFinal.toFixed(4);
+        }
+        
+        function calculateAll() {
+            calculateLMSR();
+            calculateLSLMSR();
+        }
+        
+        // Initialize calculations on page load
+        window.onload = function() {
+            calculateAll();
+        };
+        
+        // Auto-update on input change
+        document.addEventListener('input', function(e) {
+            if (e.target.type === 'number') {
+                calculateAll();
+            }
+        });
+    </script>
+</body>
+</html>
